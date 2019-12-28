@@ -1,5 +1,10 @@
-<?php 
-include("conn/db.php");
+<?php
+    include('conn/db.php');
+    session_start();
+   if(isset($_SESSION["user"]))  
+    {  
+        header("location:dashboard.php");  
+    }
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -46,7 +51,7 @@ include("conn/db.php");
             <div class="col-sm-6 col-sm-push-3">
                     <?php
 
-                    if(isset($_POST['username'])&&isset($_POST['password'])){
+                    /*if(isset($_POST['username'])&&isset($_POST['password'])){
                         $un = $_POST['username'];
                         $pass = $_POST['password'];
                         $pass_hash =md5($pass);
@@ -76,14 +81,56 @@ include("conn/db.php");
                         else{
                             echo '<p style="color:red;">All fields are required.</p>';
                         }
-                    }
+                    }*/
                     ?>
+                    <?php
+                        $error = "";
+
+                        if($_SERVER["REQUEST_METHOD"] == "POST") {
+                            // email and password sent from form 
+                            
+                            $un = mysqli_real_escape_string($db,$_POST['username']);
+                            $password = mysqli_real_escape_string($db,$_POST['password']); 
+                            
+                            $a = "SELECT * FROM users WHERE username = '$un' ";
+                            $result = mysqli_query($db,$a);
+                            
+                            $count = mysqli_num_rows($result);
+                            
+                            // If result matched $myemail and $mypassword, table row must be 1 row
+                                
+                            if($count > 0) {
+                                //session_register("myemail");
+                                
+                                while($row = mysqli_fetch_array($result))  
+                                        {  
+                                            if(password_verify($password, $row["password"]))  
+                                            {  
+                                                //return true;  
+                                                $_SESSION["user"] = $un;  
+                                                
+                                                header("location: dashboard.php");  
+                                            }  
+                                            else  
+                                            {  
+                                                //return false;  
+                                                $error = "<p style=\"color:red;\">Your Username or Password is invalid</p>";  
+                                            }  
+                                        }         
+                                
+                            }else {
+                                $error = "<p style=\"color:red;\">Your Username or Password is invalid</p>";
+                            }
+                        }
+
+                    ?>
+                    <?php echo $error;?>
                     <div class="panel panel-danger">
                         <div class="panel-heading">
                             <h3><span class="fa fa-user" style="font-size: 70px; color:gray;"></span>&nbsp;&nbsp;Admin Login</h3>
                         </div>
                         <div class="panel-body">    
-                            <form action="index.php" method="post" id="login" onsubmit="return validateLogin()">
+                            <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post" id="login" onsubmit="return validateLogin()">
                                 <div class="form-group">
                                     <label for="username">Username*</label>
                                     <input type="text" name="username" class="form-control" id="username" placeholder="Please enter username"/>
